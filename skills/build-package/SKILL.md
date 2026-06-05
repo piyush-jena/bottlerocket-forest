@@ -47,6 +47,13 @@ cd kits/<kit-name>
 
 ### 3. Build the package
 
+When building a package that has just been updated to a new version, **always use upstream source fallback** since the Bottlerocket cache will not have the new version yet:
+
+```bash
+PACKAGE=<package-name> make twoliter build-package -e BUILDSYS_UPSTREAM_SOURCE_FALLBACK=true
+```
+
+If building a package that has NOT been version-bumped (e.g., patch-only changes to an existing version):
 ```bash
 PACKAGE=<package-name> make twoliter build-package
 ```
