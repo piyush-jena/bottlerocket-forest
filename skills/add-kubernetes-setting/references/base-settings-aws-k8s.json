@@ -1,0 +1,156 @@
+{
+  "os": {
+    "arch": "x86_64",
+    "build_id": "be6a1e85",
+    "pretty_name": "Bottlerocket OS 1.69.0 (aws-k8s-1.36)",
+    "variant_id": "aws-k8s-1.36",
+    "version_id": "1.69.0"
+  },
+  "settings": {
+    "autoscaling": {
+      "should-wait": false
+    },
+    "aws": {
+      "config": "W2RlZmF1bHRdCnVzZV9maXBzX2VuZHBvaW50PWZhbHNl",
+      "profile": "default",
+      "region": "us-west-2"
+    },
+    "boot": {
+      "kernel": {
+        "SYSTEMD_CGROUP_ENABLE_LEGACY_FORCE": [
+          "1"
+        ],
+        "SYSTEMD_DEFAULT_MOUNT_RATE_LIMIT_BURST": [
+          "25"
+        ],
+        "module_blacklist": [
+          "i8042"
+        ]
+      }
+    },
+    "cloudformation": {
+      "logical-resource-id": "",
+      "should-signal": false,
+      "stack-name": ""
+    },
+    "host-containers": {
+      "admin": {
+        "enabled": true,
+        "source": "328549459982.dkr.ecr.us-west-2.amazonaws.com/bottlerocket-admin:v0.21.7",
+        "superpowered": true,
+        "user-data": "eyJzc2giOnsiYXV0aG9yaXplZC1rZXlzIjpbXX19"
+      },
+      "control": {
+        "enabled": true,
+        "source": "328549459982.dkr.ecr.us-west-2.amazonaws.com/bottlerocket-control:v0.21.7",
+        "superpowered": false
+      }
+    },
+    "kernel": {
+      "lockdown": "integrity"
+    },
+    "kubernetes": {
+      "api-server": "https://EXAMPLE.gr7.us-west-2.eks.amazonaws.com",
+      "authentication-mode": "aws",
+      "cloud-provider": "external",
+      "cluster-certificate": "LS0tLS1CRUdJTi1QTEFDRUhPTERFUi0tLS0t",
+      "cluster-dns-ip": "10.100.0.10",
+      "cluster-domain": "cluster.local",
+      "cluster-name": "example-cluster",
+      "credential-providers": {
+        "ecr-credential-provider": {
+          "cache-duration": "12h",
+          "enabled": true,
+          "image-patterns": [
+            "*.dkr.ecr.*.amazonaws.com",
+            "*.dkr.ecr.*.amazonaws.com.cn",
+            "*.dkr.ecr.*.amazonaws.eu",
+            "*.dkr-ecr.*.on.aws",
+            "*.dkr-ecr.*.on.amazonwebservices.com.cn",
+            "*.dkr.ecr-fips.*.amazonaws.com",
+            "*.dkr.ecr-fips.*.amazonaws.eu",
+            "*.dkr.ecr.*.cloud.adc-e.uk",
+            "*.dkr.ecr-fips.*.cloud.adc-e.uk",
+            "*.dkr.ecr.*.c2s.ic.gov",
+            "*.dkr.ecr-fips.*.c2s.ic.gov",
+            "*.dkr.ecr.*.sc2s.sgov.gov",
+            "*.dkr.ecr-fips.*.sc2s.sgov.gov",
+            "*.dkr.ecr.*.csp.hci.ic.gov",
+            "*.dkr.ecr-fips.*.csp.hci.ic.gov",
+            "public.ecr.aws",
+            "ecr-public.aws.com"
+          ]
+        }
+      },
+      "device-ownership-from-security-context": true,
+      "hostname-override": "ip-192-0-2-10.us-west-2.compute.internal",
+      "hostname-override-source": "private-dns-name",
+      "max-pods": 29,
+      "node-ip": "192.0.2.10",
+      "provider-id": "aws:///us-west-2a/i-0123456789abcdef0",
+      "seccomp-default": true,
+      "server-tls-bootstrap": true,
+      "shutdown-grace-period": "150s",
+      "shutdown-grace-period-for-critical-pods": "30s",
+      "standalone-mode": false
+    },
+    "metrics": {
+      "metrics-url": "https://metrics.bottlerocket.aws/v1/metrics",
+      "send-metrics": true,
+      "service-checks": [
+        "apiserver",
+        "chronyd",
+        "containerd",
+        "host-containerd",
+        "kubelet"
+      ]
+    },
+    "motd": "Welcome to Bottlerocket!",
+    "network": {
+      "hostname": "ip-192-0-2-10.us-west-2.compute.internal"
+    },
+    "ntp": {
+      "options": [
+        "iburst"
+      ],
+      "time-servers": [
+        "169.254.169.123",
+        "2.amazon.pool.ntp.org"
+      ]
+    },
+    "oci-defaults": {
+      "capabilities": {
+        "audit-write": true,
+        "chown": true,
+        "dac-override": true,
+        "fowner": true,
+        "fsetid": true,
+        "kill": true,
+        "mknod": true,
+        "net-bind-service": true,
+        "net-raw": true,
+        "setfcap": true,
+        "setgid": true,
+        "setpcap": true,
+        "setuid": true,
+        "sys-chroot": true
+      },
+      "resource-limits": {
+        "max-open-files": {
+          "hard-limit": 1048576,
+          "soft-limit": 65536
+        }
+      }
+    },
+    "oci-hooks": {
+      "log4j-hotpatch-enabled": false
+    },
+    "updates": {
+      "ignore-waves": false,
+      "metadata-base-url": "https://updates.bottlerocket.aws/2020-07-07/aws-k8s-1.36/x86_64/",
+      "seed": 1743,
+      "targets-base-url": "https://updates.bottlerocket.aws/targets/",
+      "version-lock": "latest"
+    }
+  }
+}

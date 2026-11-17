@@ -1,0 +1,105 @@
+// br-kubelet-validate loads kubelet config files the way this kubelet version does at startup and
+// reports what would happen: keys it would ignore, and errors that would stop it from starting.
+//
+// It is generated into a vendor copy of the exact Kubernetes source a core-kit package builds, by
+// the add-kubernetes-setting skill's kubelet-validate.sh. The @...@ markers are filled in per version.
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
+	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/cmd/kubelet/app"
+	"k8s.io/kubernetes/pkg/kubelet/apis/config/scheme"
+	"k8s.io/kubernetes/pkg/kubelet/apis/config/validation"
+	"k8s.io/kubernetes/pkg/kubelet/cm"
+	"k8s.io/kubernetes/pkg/kubelet/cm/cpumanager"
+	"k8s.io/kubernetes/pkg/kubelet/cm/topologymanager"
+	"k8s.io/kubernetes/pkg/kubelet/eviction"
+)
+
+var _ = klog.Background
+
+func check(path string) []string {
+	var problems []string
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return []string{fmt.Sprintf("READ: %v", err)}
+	}
+
+	// kubelet tries strict decoding first and falls back to lenient decoding with only a warning,
+	// so anything strict decoding rejects is silently ignored by the kubelet.
+	_, strictCodecs, err := scheme.NewSchemeAndCodecs(serializer.EnableStrict)
+	if err != nil {
+		return []string{fmt.Sprintf("INTERNAL: %v", err)}
+	}
+	if _, _, err := strictCodecs.UniversalDecoder().Decode(data, nil, nil); err != nil {
+		problems = append(problems, fmt.Sprintf("IGNORED (strict decoding failed, kubelet falls back and ignores it): %v", err))
+	}
+
+	// Same loader kubelet uses for --config, including its evictionHard defaulting and merging.
+	kc, err := app.BRLoadConfigFile(path)
+	if err != nil {
+		return append(problems, fmt.Sprintf("FATAL (kubelet cannot load the file): %v", err))
+	}
+
+	// Feature gates from the file, then the same validation kubelet runs before starting.
+	if err := utilfeature.DefaultMutableFeatureGate.SetFromMap(kc.FeatureGates); err != nil {
+		problems = append(problems, fmt.Sprintf("FATAL (feature gates): %v", err))
+	}
+	if err := validation.ValidateKubeletConfiguration(kc, utilfeature.DefaultFeatureGate); err != nil {
+		problems = append(problems, fmt.Sprintf("FATAL (validation): %v", err))
+	}
+
+	// Parsed later in startup (cmd/kubelet/app/server.go run, pkg/kubelet/kubelet.go NewMainKubelet);
+	// a failure there also makes kubelet exit.
+	for name, m := range map[string]map[string]string{"kubeReserved": kc.KubeReserved, "systemReserved": kc.SystemReserved} {
+		if _, err := app.BRParseResourceList(m); err != nil {
+			problems = append(problems, fmt.Sprintf("FATAL (%s): %v", name, err))
+		}
+	}
+	if _, err := eviction.ParseThresholdConfig(kc.EnforceNodeAllocatable, kc.EvictionHard, kc.EvictionSoft,
+		kc.EvictionSoftGracePeriod, kc.EvictionMinimumReclaim); err != nil {
+		problems = append(problems, fmt.Sprintf("FATAL (eviction thresholds): %v", err))
+	}
+	if _, err := cm.ParseQOSReserved(kc.QOSReserved); err != nil {
+		problems = append(problems, fmt.Sprintf("FATAL (qosReserved): %v", err))
+	}
+
+	// Policy options are checked when the CPU and topology managers are created.
+	switch kc.CPUManagerPolicy {
+	case "static":
+		if _, err := cpumanager.NewStaticPolicyOptions(kc.CPUManagerPolicyOptions); err != nil {
+			problems = append(problems, fmt.Sprintf("FATAL (cpu manager): %v", err))
+		}
+	default:
+		if _, err := cpumanager.NewNonePolicy(kc.CPUManagerPolicyOptions); err != nil {
+			problems = append(problems, fmt.Sprintf("FATAL (cpu manager): %v", err))
+		}
+	}
+	if _, err := topologymanager.NewPolicyOptions(@TOPOLOGY_LOGGER@kc.TopologyManagerPolicyOptions); err != nil {
+		problems = append(problems, fmt.Sprintf("FATAL (topology manager): %v", err))
+	}
+	return problems
+}
+
+func main() {
+	failed := false
+	for _, path := range os.Args[1:] {
+		problems := check(path)
+		if len(problems) == 0 {
+			fmt.Printf("%s: OK\n", path)
+			continue
+		}
+		failed = true
+		for _, p := range problems {
+			fmt.Printf("%s: %s\n", path, p)
+		}
+	}
+	if failed {
+		os.Exit(1)
+	}
+}
